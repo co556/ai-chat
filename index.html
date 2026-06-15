@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1119">
+<title>AI Chat Pro</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+<!-- SIDEBAR DRAWER -->
+<div id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside id="sidebar">
+<div class="sidebar-header">
+<div class="logo">🤖 AI Chat Pro</div>
+<button class="btn-icon sidebar-close" onclick="closeSidebar()">✕</button>
+</div>
+<nav class="sidebar-nav">
+<a href="#/" class="nav-item" onclick="closeSidebar()"><span>🏠</span> 首页</a>
+<a href="#/characters" class="nav-item" onclick="closeSidebar()"><span>🎭</span> 角色管理</a>
+<a href="#/group" class="nav-item" onclick="closeSidebar()"><span>👥</span> 群聊大厅</a>
+<a href="#/settings" class="nav-item" onclick="closeSidebar()"><span>⚙️</span> 设置</a>
+</nav>
+<div class="sidebar-chats">
+<div class="sidebar-section-title">💬 最近聊天</div>
+<div id="recentChats"></div>
+</div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main id="mainContent">
+
+<!-- TOP BAR (mobile: hamburger + title) -->
+<div class="top-bar" id="topBar">
+<button class="btn-icon" onclick="openSidebar()">☰</button>
+<span class="top-title" id="topTitle">AI Chat Pro</span>
+<div style="width:36px"></div>
+</div>
+
+<!-- PAGE: Home -->
+<div class="page" id="page-home">
+<div class="home-characters"><h3>🎭 我的角色</h3><div class="char-grid" id="homeCharGrid"></div></div>
+<div class="home-quick-actions">
+<button class="home-card" onclick="navigateTo('#/characters/new')"><span class="home-card-icon">➕</span><span>创建角色</span></button>
+<button class="home-card" onclick="navigateTo('#/group')"><span class="home-card-icon">👥</span><span>群聊大厅</span></button>
+</div>
+</div>
+
+<!-- PAGE: Characters -->
+<div class="page" id="page-characters">
+<div class="page-header"><h1>🎭 角色管理</h1><button class="btn-primary" onclick="navigateTo('#/characters/new')">+ 新建</button></div>
+<div class="char-grid" id="charGrid"></div>
+</div>
+
+<!-- PAGE: Character Editor -->
+<div class="page" id="page-character-editor">
+<div class="page-header"><h1 id="editorTitle">新建角色</h1><button class="btn-back" onclick="history.back()">← 返回</button></div>
+<form id="charForm" class="char-form">
+<div class="form-group"><label>名称 *</label><input type="text" id="cfName" placeholder="给AI起个名字" required></div>
+<div class="form-group"><label>头像预览</label>
+<div class="avatar-row">
+<div class="avatar-preview-wrap"><img id="cfAvatarPreview" class="avatar-preview-img" src="" alt="预览" onerror="this.style.display='none'"></div>
+<div class="avatar-opts">
+<select id="cfAvatarStyle" onchange="updateAvatarPreview()">
+<option value="adventurer">🎨 冒险家风格</option>
+<option value="avataaars">👤 现代扁平</option>
+<option value="lorelei">🌈 抽象艺术</option>
+<option value="notionists">📝 Notion风格</option>
+<option value="personas">🧑 写实肖像</option>
+<option value="bottts">🤖 机器人</option>
+<option value="pixel-art">👾 像素风</option>
+<option value="custom">🖼️ 自定义图片</option>
+</select>
+<input type="text" id="cfCustomAvatar" placeholder="输入图片URL..." style="display:none;margin-top:6px" oninput="updateAvatarPreview()">
+</div>
+</div>
+</div>
+<div class="form-group"><label>性格描述 *</label><textarea id="cfPersonality" rows="3" placeholder="例如：温柔体贴的女高中生，说话带点傲娇，喜欢用颜文字..." required></textarea></div>
+<div class="form-group"><label>人设背景</label><textarea id="cfBackstory" rows="3" placeholder="例如：你是小樱，17岁，是用户的青梅竹马..."></textarea></div>
+<div class="form-group"><label>长期记忆（我会在对话中始终记住的事实）</label><textarea id="cfMemory" rows="2" placeholder="例如：用户叫小明，今年25岁，喜欢喝咖啡，讨厌香菜..."></textarea></div>
+<div class="form-group"><label>对话风格</label><select id="cfStyle"><option value="balanced">平衡 — 长短适中</option><option value="short">简洁 — 能短则短</option><option value="detailed">详细 — 充分发挥</option><option value="casual">随意 — 像朋友聊天</option><option value="formal">正式 — 礼貌得体</option></select></div>
+<div class="form-row">
+<div class="form-group flex-1"><label>模型</label><select id="cfModel"><option value="deepseek-chat">DeepSeek Chat（推荐）</option><option value="deepseek-reasoner">DeepSeek Reasoner（深度思考）</option></select></div>
+<div class="form-group" style="width:140px"><label>随机性: <span id="tempVal">1.0</span></label><input type="range" id="cfTemp" min="0" max="2" step="0.1" value="1" oninput="document.getElementById('tempVal').textContent=this.value"></div>
+</div>
+<input type="hidden" id="cfId">
+<div class="form-actions"><button type="button" class="btn-secondary" onclick="history.back()">取消</button><button type="submit" class="btn-primary">💾 保存</button></div>
+</form>
+</div>
+
+<!-- PAGE: Chat -->
+<div class="page" id="page-chat">
+<div class="chat-header">
+<button class="btn-back" onclick="history.back()">←</button>
+<div class="chat-header-info"><span class="chat-avatar" id="chatAvatar">😊</span><div><div class="chat-name" id="chatName">角色名</div><div class="chat-model" id="chatModel"></div></div></div>
+<div class="chat-header-actions"><button class="btn-icon" onclick="regenerateLast()">🔄</button><button class="btn-icon" onclick="clearCurrentChat()">🗑️</button></div>
+</div>
+<div class="chat-messages" id="chatMessages"><div class="chat-empty"><div class="chat-empty-icon">💬</div><div>开始对话吧</div></div></div>
+<div class="chat-input-bar"><textarea id="chatInput" rows="1" placeholder="输入消息..." onkeydown="handleChatKey(event)"></textarea><button class="btn-send" onclick="sendChatMessage()">发送</button></div>
+</div>
+
+<!-- PAGE: Group List -->
+<div class="page" id="page-group-list">
+<div class="page-header"><h1>👥 群聊大厅</h1><button class="btn-primary" onclick="showNewGroupModal()">+ 新建</button></div>
+<div class="group-list" id="groupList"><p class="empty-text">还没有群聊，创建一个吧</p></div>
+</div>
+
+<!-- PAGE: Group Chat -->
+<div class="page" id="page-group-chat">
+<div class="chat-header"><button class="btn-back" onclick="navigateTo('#/group')">←</button><div class="chat-header-info"><span>👥</span><div><div class="chat-name" id="groupChatName">群聊</div><div class="chat-model" id="groupChatMembers"></div></div></div><button class="btn-icon" onclick="clearCurrentGroupChat()">🗑️</button></div>
+<div class="chat-messages" id="groupChatMessages"><div class="chat-empty"><div class="chat-empty-icon">👥</div><div>群聊开始！发言让AI们加入讨论</div></div></div>
+<div class="chat-input-bar"><textarea id="groupChatInput" rows="1" placeholder="在群聊中发言..." onkeydown="handleGroupChatKey(event)"></textarea><button class="btn-send" onclick="sendGroupMessage()">发送</button></div>
+</div>
+
+<!-- PAGE: Settings -->
+<div class="page" id="page-settings">
+<div class="page-header"><h1>⚙️ 设置</h1></div>
+<div class="settings-form">
+<div class="form-group"><label>DeepSeek API Key</label><input type="password" id="sApiKey" placeholder="sk-..."><small>在 <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a> 获取 Key，新用户送 500 万 token</small></div>
+<div class="form-group"><label>默认模型</label><select id="sDefaultModel"><option value="deepseek-chat">DeepSeek Chat（推荐）</option><option value="deepseek-reasoner">DeepSeek Reasoner</option></select></div>
+<div class="form-group"><label>API 地址</label><input type="text" id="sApiBase" placeholder="https://api.deepseek.com"><small>默认就是 DeepSeek 官方地址，一般不用改</small></div>
+<button class="btn-primary" onclick="saveSettings()">💾 保存设置</button>
+<div class="settings-status" id="settingsStatus"></div>
+</div>
+</div>
+
+</main>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav" id="bottomNav">
+<a href="#/" class="bn-item"><span>🏠</span><span>首页</span></a>
+<a href="#/characters" class="bn-item"><span>🎭</span><span>角色</span></a>
+<a href="#/group" class="bn-item"><span>👥</span><span>群聊</span></a>
+<a href="#/settings" class="bn-item"><span>⚙️</span><span>设置</span></a>
+</nav>
+
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="editModal"><div class="modal"><h3>✏️ 编辑回复</h3><textarea id="editMsgText" rows="4"></textarea><div class="modal-actions"><button class="btn-secondary" onclick="closeEditModal()">取消</button><button class="btn-primary" onclick="saveEditedMessage()">保存</button></div></div></div>
+<div class="modal-overlay" id="newGroupModal"><div class="modal"><h3>👥 新建群聊</h3><div class="form-group"><label>群聊名称</label><input type="text" id="ngName" placeholder="给群聊起个名字"></div><div class="form-group"><label>选择成员（2~5人）</label><div class="checkbox-grid" id="ngCharList"></div></div><div class="modal-actions"><button class="btn-secondary" onclick="closeNewGroupModal()">取消</button><button class="btn-primary" onclick="createGroupChat()">创建</button></div></div></div>
+
+<script src="app.js"></script>
+</body>
+</html>
