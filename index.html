@@ -53,13 +53,13 @@
 
 <!-- PAGE: Characters -->
 <div class="page" id="page-characters">
-<div class="page-header"><h1>🎭 角色管理</h1><button class="btn-primary" onclick="navigateTo('#/characters/new')">+ 新建</button></div>
+<div class="page-header"><h1 class="hidden-on-mobile">🎭 角色管理</h1><button class="btn-primary" onclick="navigateTo('#/characters/new')">+ 新建</button></div>
 <div class="char-grid" id="charGrid"></div>
 </div>
 
 <!-- PAGE: Character Editor -->
 <div class="page" id="page-character-editor">
-<div class="page-header"><h1 id="editorTitle">新建角色</h1><button class="btn-back" onclick="history.back()">← 返回</button></div>
+<div class="page-header"><h1 id="editorTitle" class="hidden-on-mobile">新建角色</h1><button class="btn-back" onclick="history.back()">← 返回</button></div>
 <form id="charForm" class="char-form">
 <div class="form-group"><label>名称 *</label><input type="text" id="cfName" placeholder="给AI起个名字" required></div>
 <div class="form-group"><label>头像预览</label>
@@ -78,8 +78,9 @@
 </select>
 <div id="cfCustomWrap" style="display:none;margin-top:8px">
 <input type="file" id="cfCustomFile" accept="image/*" onchange="handleAvatarUpload(this)" style="display:none">
-<button type="button" class="btn-secondary" onclick="document.getElementById('cfCustomFile').click()" style="width:100%">📷 从相册选择图片</button>
-<input type="text" id="cfCustomAvatar" placeholder="或输入图片URL..." style="margin-top:8px" oninput="updateAvatarPreview()">
+<button type="button" class="btn-upload" onclick="document.getElementById('cfCustomFile').click()">📷 从相册选择照片</button>
+<div style="font-size:11px;color:var(--text3);text-align:center;margin:6px 0">或</div>
+<input type="text" id="cfCustomAvatar" placeholder="粘贴图片链接..." style="margin-top:0" oninput="updateAvatarPreview()">
 </div>
 </div>
 </div>
@@ -110,7 +111,7 @@
 
 <!-- PAGE: Group List -->
 <div class="page" id="page-group-list">
-<div class="page-header"><h1>👥 群聊大厅</h1><button class="btn-primary" onclick="showNewGroupModal()">+ 新建</button></div>
+<div class="page-header"><h1 class="hidden-on-mobile">👥 群聊大厅</h1><button class="btn-primary" onclick="showNewGroupModal()">+ 新建</button></div>
 <div class="group-list" id="groupList"><p class="empty-text">还没有群聊，创建一个吧</p></div>
 </div>
 
@@ -123,7 +124,7 @@
 
 <!-- PAGE: Settings -->
 <div class="page" id="page-settings">
-<div class="page-header"><h1>⚙️ 设置</h1></div>
+<div class="page-header"><h1 class="hidden-on-mobile">⚙️ 设置</h1></div>
 <div class="settings-form">
 <div class="form-group"><label>DeepSeek API Key</label><input type="password" id="sApiKey" placeholder="sk-..."><small>在 <a href="https://platform.deepseek.com/api_keys" target="_blank">platform.deepseek.com</a> 获取 Key，新用户送 500 万 token</small></div>
 <div class="form-group"><label>默认模型</label><select id="sDefaultModel"><option value="deepseek-chat">DeepSeek Chat（推荐）</option><option value="deepseek-reasoner">DeepSeek Reasoner</option></select></div>

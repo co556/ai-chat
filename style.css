@@ -75,6 +75,8 @@ body{font-family:system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-se
 .cc-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:12px;transition:all .12s;font-weight:500}
 .cc-btn:active{border-color:var(--accent);color:var(--text)}
 .cc-btn.danger:active{border-color:var(--red);color:var(--red)}
+.btn-upload{width:100%;padding:14px;border-radius:12px;border:2px dashed var(--accent);background:rgba(139,92,246,.08);color:var(--accent);cursor:pointer;font-size:15px;font-weight:600;transition:all .15s}
+.btn-upload:active{background:rgba(139,92,246,.18)}
 
 /* FORM */
 .char-form{padding:16px 14px;overflow-y:auto;flex:1}
@@ -180,5 +182,31 @@ body{font-family:system-ui,-apple-system,'PingFang SC','Microsoft YaHei',sans-se
 .sidebar-close{display:none}
 .modal{border-radius:18px;align-self:center;margin:20px}
 .modal-overlay{align-items:center}
-.msg-row{max-width:72%}
+.msg-row{max-width:68%}
+.card-avatar{width:80px;height:80px}
+.char-card{padding:22px 16px}
+}
+
+/* Mobile-only fixes */
+@media(max-width:768px){
+.msg-row{max-width:82%}
+.card-avatar{width:52px;height:52px}
+.char-card{padding:14px 10px}
+.char-card .cc-name{font-size:14px}
+.char-card .cc-desc{font-size:11px}
+.page-header{padding:0;border-bottom:none}
+.page-header h1{font-size:18px}
+.page-header .btn-primary{padding:10px 18px;font-size:13px}
+.chat-header{padding:8px 10px}
+.chat-name{font-size:15px}
+.chat-messages{padding:10px 8px;gap:10px}
+.chat-input-bar{padding:8px 10px;padding-bottom:calc(8px + var(--safe-bottom))}
+.chat-input-bar textarea{font-size:16px;padding:10px 14px}
+.btn-send{padding:8px 16px;font-size:14px}
+.hidden-on-mobile{display:none!important}
+.top-bar{padding:calc(6px + var(--safe-top)) 10px 8px}
+.top-title{font-size:15px}
+.bottom-nav .bn-item{padding:5px 0 3px;font-size:9px}
+.bottom-nav .bn-item span:first-child{font-size:22px}
+.avatar-preview-wrap{width:72px;height:72px}
 }

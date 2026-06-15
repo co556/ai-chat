@@ -136,7 +136,7 @@ const c=characters.find(x=>x.id===id);if(!c)return;navigateTo('#/characters/'+id
 document.getElementById('editorTitle').textContent='编辑角色';document.getElementById('cfId').value=c.id;
 document.getElementById('cfName').value=c.name;document.getElementById('cfAvatarStyle').value=c.avatarStyle||'adventurer';
 document.getElementById('cfCustomAvatar').value=c.customAvatar||'';document.getElementById('cfCustomFile').value='';
-document.getElementById('cfCustomWrap').style.display=c.avatarStyle==='custom'?'block':'none';
+document.getElementById('cfCustomWrap').style.display=c.avatarStyle==='custom'?'block':'none';updateAvatarPreview();
 document.getElementById('cfPersonality').value=c.personality;document.getElementById('cfBackstory').value=c.backstory||'';
 document.getElementById('cfMemory').value=c.memory||'';document.getElementById('cfStyle').value=c.style||'balanced';
 document.getElementById('cfModel').value=c.model||settings.defaultModel;
