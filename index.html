@@ -76,7 +76,11 @@
 <option value="pixel-art">👾 像素风</option>
 <option value="custom">🖼️ 自定义图片</option>
 </select>
-<input type="text" id="cfCustomAvatar" placeholder="输入图片URL..." style="display:none;margin-top:6px" oninput="updateAvatarPreview()">
+<div id="cfCustomWrap" style="display:none;margin-top:8px">
+<input type="file" id="cfCustomFile" accept="image/*" onchange="handleAvatarUpload(this)" style="display:none">
+<button type="button" class="btn-secondary" onclick="document.getElementById('cfCustomFile').click()" style="width:100%">📷 从相册选择图片</button>
+<input type="text" id="cfCustomAvatar" placeholder="或输入图片URL..." style="margin-top:8px" oninput="updateAvatarPreview()">
+</div>
 </div>
 </div>
 </div>

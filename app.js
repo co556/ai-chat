@@ -26,19 +26,42 @@ return'<img class="'+cls+'" src="'+url+'" alt="'+(ch?ch.name:'AI')+'" onerror="t
 
 function updateAvatarPreview(){
 const style=document.getElementById('cfAvatarStyle').value;
-const customInput=document.getElementById('cfCustomAvatar');
-customInput.style.display=style==='custom'?'block':'none';
+const customWrap=document.getElementById('cfCustomWrap');
+customWrap.style.display=style==='custom'?'block':'none';
 const name=document.getElementById('cfName').value||'ai';
 const preview=document.getElementById('cfAvatarPreview');
 if(style==='custom'){
-preview.src=customInput.value||'';
-preview.style.display=customInput.value?'block':'none';
+const url=document.getElementById('cfCustomAvatar').value;
+preview.src=url||'';
+preview.style.display=url?'block':'none';
 }else{
 preview.src='https://api.dicebear.com/9.x/'+style+'/svg?seed='+encodeURIComponent(name)+'&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf';
 preview.style.display='block';
 }
 }
 document.getElementById('cfName').addEventListener('input',updateAvatarPreview);
+
+// 图片上传：压缩并转base64
+function handleAvatarUpload(input){
+const file=input.files[0];if(!file)return;
+const reader=new FileReader();
+reader.onload=function(e){
+const img=new Image();
+img.onload=function(){
+const canvas=document.createElement('canvas');
+const max=200;let w=img.width,h=img.height;
+if(w>h){if(w>max){h=h*max/w;w=max}}else{if(h>max){w=w*max/h;h=max}}
+canvas.width=w;canvas.height=h;
+canvas.getContext('2d').drawImage(img,0,0,w,h);
+const dataUrl=canvas.toDataURL('image/jpeg',0.8);
+document.getElementById('cfCustomAvatar').value=dataUrl;
+document.getElementById('cfAvatarPreview').src=dataUrl;
+document.getElementById('cfAvatarPreview').style.display='block';
+};
+img.src=e.target.result;
+};
+reader.readAsDataURL(file);
+}
 
 // ==================== SIDEBAR ====================
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('active')}
@@ -100,7 +123,8 @@ grid.innerHTML=characters.map(c=>'<div class="char-card">'+avatarImg(c,'card-ava
 function showCharacterEditor(){
 document.getElementById('editorTitle').textContent='新建角色';document.getElementById('cfId').value='';
 document.getElementById('cfName').value='';document.getElementById('cfAvatarStyle').value='adventurer';
-document.getElementById('cfCustomAvatar').value='';document.getElementById('cfCustomAvatar').style.display='none';
+document.getElementById('cfCustomAvatar').value='';document.getElementById('cfCustomFile').value='';
+document.getElementById('cfCustomWrap').style.display='none';
 document.getElementById('cfPersonality').value='';document.getElementById('cfBackstory').value='';
 document.getElementById('cfMemory').value='';document.getElementById('cfStyle').value='balanced';
 document.getElementById('cfModel').value=settings.defaultModel||'deepseek-chat';
@@ -111,8 +135,8 @@ function editCharacter(id){
 const c=characters.find(x=>x.id===id);if(!c)return;navigateTo('#/characters/'+id);
 document.getElementById('editorTitle').textContent='编辑角色';document.getElementById('cfId').value=c.id;
 document.getElementById('cfName').value=c.name;document.getElementById('cfAvatarStyle').value=c.avatarStyle||'adventurer';
-document.getElementById('cfCustomAvatar').value=c.customAvatar||'';
-document.getElementById('cfCustomAvatar').style.display=c.avatarStyle==='custom'?'block':'none';
+document.getElementById('cfCustomAvatar').value=c.customAvatar||'';document.getElementById('cfCustomFile').value='';
+document.getElementById('cfCustomWrap').style.display=c.avatarStyle==='custom'?'block':'none';
 document.getElementById('cfPersonality').value=c.personality;document.getElementById('cfBackstory').value=c.backstory||'';
 document.getElementById('cfMemory').value=c.memory||'';document.getElementById('cfStyle').value=c.style||'balanced';
 document.getElementById('cfModel').value=c.model||settings.defaultModel;
