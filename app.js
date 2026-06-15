@@ -10,10 +10,10 @@ function saveAll(){LS.set('aichat_characters',characters);LS.set('aichat_chats',
 function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 const modelLabels={'deepseek-chat':'DeepSeek Chat','deepseek-reasoner':'DeepSeek Reasoner'};
 
-// 头像：DiceBear生成或自定义URL
+// 头像：自定义图片优先，否则用DiceBear
 function getAvatarUrl(ch){
 if(!ch)return'';
-if(ch.avatarStyle==='custom'&&ch.customAvatar)return ch.customAvatar;
+if(ch.customAvatar)return ch.customAvatar;
 const style=ch.avatarStyle||'adventurer';
 const seed=encodeURIComponent(ch.name||'ai');
 return'https://api.dicebear.com/9.x/'+style+'/svg?seed='+seed+'&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf';
@@ -25,19 +25,15 @@ return'<img class="'+cls+'" src="'+url+'" alt="'+(ch?ch.name:'AI')+'" onerror="t
 }
 
 function updateAvatarPreview(){
-const style=document.getElementById('cfAvatarStyle').value;
-const customWrap=document.getElementById('cfCustomWrap');
-customWrap.style.display=style==='custom'?'block':'none';
-const name=document.getElementById('cfName').value||'ai';
+const customUrl=document.getElementById('cfCustomAvatar').value.trim();
 const preview=document.getElementById('cfAvatarPreview');
-if(style==='custom'){
-const url=document.getElementById('cfCustomAvatar').value;
-preview.src=url||'';
-preview.style.display=url?'block':'none';
-}else{
+if(customUrl){
+preview.src=customUrl;preview.style.display='block';return;
+}
+const style=document.getElementById('cfAvatarStyle').value;
+const name=document.getElementById('cfName').value||'ai';
 preview.src='https://api.dicebear.com/9.x/'+style+'/svg?seed='+encodeURIComponent(name)+'&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf';
 preview.style.display='block';
-}
 }
 document.getElementById('cfName').addEventListener('input',updateAvatarPreview);
 
@@ -124,7 +120,6 @@ function showCharacterEditor(){
 document.getElementById('editorTitle').textContent='新建角色';document.getElementById('cfId').value='';
 document.getElementById('cfName').value='';document.getElementById('cfAvatarStyle').value='adventurer';
 document.getElementById('cfCustomAvatar').value='';document.getElementById('cfCustomFile').value='';
-document.getElementById('cfCustomWrap').style.display='none';
 document.getElementById('cfPersonality').value='';document.getElementById('cfBackstory').value='';
 document.getElementById('cfMemory').value='';document.getElementById('cfStyle').value='balanced';
 document.getElementById('cfModel').value=settings.defaultModel||'deepseek-chat';
@@ -135,8 +130,7 @@ function editCharacter(id){
 const c=characters.find(x=>x.id===id);if(!c)return;navigateTo('#/characters/'+id);
 document.getElementById('editorTitle').textContent='编辑角色';document.getElementById('cfId').value=c.id;
 document.getElementById('cfName').value=c.name;document.getElementById('cfAvatarStyle').value=c.avatarStyle||'adventurer';
-document.getElementById('cfCustomAvatar').value=c.customAvatar||'';document.getElementById('cfCustomFile').value='';
-document.getElementById('cfCustomWrap').style.display=c.avatarStyle==='custom'?'block':'none';updateAvatarPreview();
+document.getElementById('cfCustomAvatar').value=c.customAvatar||'';document.getElementById('cfCustomFile').value='';updateAvatarPreview();
 document.getElementById('cfPersonality').value=c.personality;document.getElementById('cfBackstory').value=c.backstory||'';
 document.getElementById('cfMemory').value=c.memory||'';document.getElementById('cfStyle').value=c.style||'balanced';
 document.getElementById('cfModel').value=c.model||settings.defaultModel;
