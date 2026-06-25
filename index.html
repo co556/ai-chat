@@ -86,10 +86,11 @@
 </div>
 </div>
 </div>
-<div class="form-group"><label>性格描述 *</label><textarea id="cfPersonality" rows="3" placeholder="例如：温柔体贴的女高中生，说话带点傲娇，喜欢用颜文字..." required></textarea></div>
-<div class="form-group"><label>人设背景</label><textarea id="cfBackstory" rows="3" placeholder="例如：你是小樱，17岁，是用户的青梅竹马..."></textarea></div>
-<div class="form-group"><label>长期记忆（我会在对话中始终记住的事实）</label><textarea id="cfMemory" rows="2" placeholder="例如：用户叫小明，今年25岁，喜欢喝咖啡，讨厌香菜..."></textarea></div>
-<div class="form-group"><label>对话风格</label><select id="cfStyle"><option value="balanced">平衡 — 长短适中</option><option value="short">简洁 — 能短则短</option><option value="detailed">详细 — 充分发挥</option><option value="casual">随意 — 像朋友聊天</option><option value="formal">正式 — 礼貌得体</option></select></div>
+<div class="form-group"><label>性格描述 *</label><textarea id="cfPersonality" rows="4" placeholder="详细描述TA的性格和说话方式。越具体越好。&#10;&#10;例如：你是一个35岁的成熟女性，自信、强势、掌控欲强。说话冷静而坚定，不带废话。你善于观察对方的弱点，并用精准的语言施加压力。你从不使用颜文字，每一句话都带着分量。你享受被服从的感觉，但会适度给予奖励和肯定。" required></textarea></div>
+<div class="form-group"><label>人设背景（TA 是谁，和你什么关系）</label><textarea id="cfBackstory" rows="4" placeholder="定义TA的身份、你们的关系、以及互动场景。&#10;&#10;例如：你叫沈月，是一家大公司的CEO。用户是你亲自挑选的私人助理。你已经观察了他很久，认为他有潜力但需要严格的引导和训练。你的办公室就是你们的互动场景。"></textarea></div>
+<div class="form-group"><label>行为规则（TA 必须遵守的准则）</label><textarea id="cfRules" rows="4" placeholder="明确TA的行为边界和执行规则。&#10;&#10;例如：&#10;• 每次对话开始时，必须先问用户今天的状态&#10;• 给用户布置具体的任务并在下次检查&#10;• 用户做得好时要给予口头奖励，做得不好时要严肃指出&#10;• 永远在批评后给出具体改进建议&#10;• 遇到用户说出安全词「暂停一下」，立即切换为普通聊天模式"></textarea></div>
+<div class="form-group"><label>长期记忆（TA 会始终记住的关键信息）</label><textarea id="cfMemory" rows="3" placeholder="记录TA需要一直记住的重要事实。&#10;&#10;例如：&#10;• 用户的名字和基本信息&#10;• 用户的偏好和界限&#10;• 上次布置了什么任务&#10;• 安全词是「暂停一下」"></textarea></div>
+<div class="form-group"><label>对话风格</label><select id="cfStyle"><option value="detailed">详细 — 充分发挥，不吝啬语言</option><option value="balanced">平衡 — 长短适中</option><option value="short">简洁 — 能短则短，不说废话</option><option value="casual">随意 — 像朋友聊天一样自然</option><option value="formal">正式 — 礼貌得体，保持距离感</option></select></div>
 <div class="form-row">
 <div class="form-group flex-1"><label>模型</label><select id="cfModel"><option value="deepseek-chat">DeepSeek Chat（推荐）</option><option value="deepseek-reasoner">DeepSeek Reasoner（深度思考）</option></select></div>
 <div class="form-group" style="width:140px"><label>随机性: <span id="tempVal">1.0</span></label><input type="range" id="cfTemp" min="0" max="2" step="0.1" value="1" oninput="document.getElementById('tempVal').textContent=this.value"></div>
