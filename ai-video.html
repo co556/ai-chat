@@ -199,7 +199,7 @@ aspect_ratio:aspectRatio,
 mode:'std'
 })
 });
-if(!createResp.ok){const e=await createResp.json().catch(()=>({}));throw new Error(e.message||'创建任务失败')}
+if(!createResp.ok){const e=await createResp.json().catch(()=>({}));throw new Error(e.message||e.error_msg||e.error||'创建任务失败 (HTTP '+createResp.status+')')}
 const createData=await createResp.json();
 const taskId=createData.data.task_id;
 
