@@ -80,6 +80,7 @@ h1{font-size:24px;font-weight:800;text-align:center;margin-bottom:4px;background
 <div class="section-title">🔑 API 设置</div>
 <div class="fg"><label>DeepSeek API Key（用于扩写脚本）</label><input type="password" id="dsKey" placeholder="sk-..."></div>
 <div class="fg"><label>可灵 Kling API Key（用于生成视频）</label><input type="password" id="klKey" placeholder="ak-..."><small>在 <a href="https://kling.kuaishou.com" target="_blank" style="color:var(--accent)">kling.kuaishou.com</a> 注册，新用户送免费积分</small></div>
+<div class="fg"><label>CORS 代理地址（解决跨域问题）</label><input type="text" id="corsProxy" placeholder="https://corsproxy.io/?"><small>浏览器安全限制，API需要通过代理转发。默认使用公共代理，也可自行搭建</small></div>
 </div>
 
 <div class="section">
@@ -117,7 +118,17 @@ let currentVideoUrl='';
 // ===== INIT =====
 document.getElementById('dsKey').value=localStorage.getItem('aivideo_dskey')||'';
 document.getElementById('klKey').value=localStorage.getItem('aivideo_klkey')||'';
+document.getElementById('corsProxy').value=localStorage.getItem('aivideo_proxy')||'https://corsproxy.io/?';
 renderHistory();
+
+function apiFetch(url,options){
+const proxy=document.getElementById('corsProxy').value.trim();
+if(proxy){
+const fullUrl=proxy+encodeURIComponent(url);
+return fetch(fullUrl,options);
+}
+return fetch(url,options);
+}
 
 // ===== TABS =====
 function switchTab(tab){
@@ -139,7 +150,8 @@ const btn=document.getElementById('btnEnhance');btn.disabled=true;btn.textConten
 setStatus('正在用 DeepSeek 优化脚本...');
 
 try{
-const resp=await fetch('https://api.deepseek.com/v1/chat/completions',{
+localStorage.setItem('aivideo_proxy',document.getElementById('corsProxy').value.trim());
+const resp=await apiFetch('https://api.deepseek.com/v1/chat/completions',{
 method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+dsKey},
 body:JSON.stringify({model:'deepseek-chat',messages:[
 {role:'system',content:'你是一个专业的AI视频脚本撰写师。根据用户的简短描述，写出一个详细的视频生成提示词。必须包含：画面构图、光线氛围、动作细节、色彩基调、镜头风格。用中文写，控制在200字以内，要具体、有画面感。直接输出提示词，不要加任何前缀说明。'},
@@ -177,7 +189,7 @@ const duration=document.getElementById('duration').value;
 const aspectRatio=document.getElementById('aspectRatio').value;
 
 // Kling API: create task
-const createResp=await fetch('https://api.kling.kuaishou.com/v1/videos/text2video',{
+const createResp=await apiFetch('https://api.kling.kuaishou.com/v1/videos/text2video',{
 method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+klKey},
 body:JSON.stringify({
 model_name:'kling-v1',
@@ -195,7 +207,7 @@ const taskId=createData.data.task_id;
 let videoUrl=null;
 for(let i=0;i<60;i++){
 await sleep(5000);
-const pollResp=await fetch('https://api.kling.kuaishou.com/v1/videos/text2video/'+taskId,{
+const pollResp=await apiFetch('https://api.kling.kuaishou.com/v1/videos/text2video/'+taskId,{
 headers:{'Authorization':'Bearer '+klKey}
 });
 const pollData=await pollResp.json();
