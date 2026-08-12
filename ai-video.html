@@ -98,7 +98,7 @@ localStorage.setItem('av_ds',key);
 const btn=document.getElementById('btnEnhance');btn.disabled=true;btn.textContent='⏳ 扩写中...';
 setStatus('DeepSeek 扩写中...');
 try{
-const resp=await apiFetch('https://api.deepseek.com/v1/chat/completions',{
+const resp=await fetch('https://api.deepseek.com/v1/chat/completions',{
 method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
 body:JSON.stringify({model:'deepseek-chat',messages:[
 {role:'system',content:'你是AI视频脚本师。把用户的话扩展成详细视频提示词：画面构图、光线、动作、色彩、镜头风格。200字以内，直接输出。'},
