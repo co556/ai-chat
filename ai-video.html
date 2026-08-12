@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>AI 视频生成器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a14;--bg2:#12121e;--bg3:#1a1a2e;--border:#252540;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--accent:#8b5cf6;--accent2:#6366f1;--safe-b:env(safe-area-inset-bottom,0px)}
+body{font-family:system-ui,-apple-system,'PingFang SC',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;-webkit-font-smoothing:antialiased}
+#app{max-width:600px;margin:0 auto;padding:20px 16px;padding-bottom:calc(20px + var(--safe-b))}
+
+h1{font-size:24px;font-weight:800;text-align:center;margin-bottom:4px;background:linear-gradient(135deg,#f59e0b,#ef4444,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{text-align:center;color:var(--text3);font-size:13px;margin-bottom:24px}
+
+.section{margin-bottom:20px}
+.section-title{font-size:14px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.section-title .badge{font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(139,92,246,.2);color:var(--accent)}
+
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.fg input,.fg textarea,.fg select{width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg3);color:var(--text);font-size:15px;font-family:inherit;outline:none;transition:border-color .15s;-webkit-appearance:none}
+.fg input:focus,.fg textarea:focus{border-color:var(--accent)}
+.fg textarea{resize:vertical;min-height:90px;line-height:1.6}
+.fg small{display:block;font-size:11px;color:var(--text3);margin-top:4px}
+.fg input[type=range]{padding:0;border:none;background:transparent;-webkit-appearance:none;height:6px;border-radius:3px;background:var(--bg3)}
+.fg input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--accent);cursor:pointer}
+
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-weight:700;cursor:pointer;font-size:16px;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-gold{background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--text2)}
+.btn-outline:active{border-color:var(--accent)}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+.result-box{margin-top:16px;border-radius:14px;overflow:hidden;background:var(--bg2);border:1px solid var(--border)}
+.result-box video{width:100%;display:block}
+.result-box .placeholder{text-align:center;padding:60px 20px;color:var(--text3)}
+.result-box .placeholder .icon{font-size:48px;margin-bottom:8px}
+
+.status{text-align:center;padding:12px;font-size:14px;color:var(--gold);font-weight:600}
+.status.error{color:#ef4444}
+.status.success{color:#22c55e}
+
+.prompt-preview{padding:14px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);font-size:14px;line-height:1.7;color:var(--text2);margin-top:8px;display:none}
+.prompt-preview.show{display:block}
+
+.history{margin-top:20px}
+.history-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);margin-bottom:6px;cursor:pointer;transition:all .12s}
+.history-item:hover{border-color:var(--accent)}
+.history-item .thumb{width:60px;height:40px;border-radius:6px;object-fit:cover;background:var(--bg3);flex-shrink:0}
+.history-item .info{flex:1;min-width:0}
+.history-item .info .title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-item .info .meta{font-size:11px;color:var(--text3);margin-top:2px}
+
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{flex:1;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;text-align:center;font-size:13px;font-weight:600;transition:all .12s}
+.tab.active{border-color:var(--accent);background:rgba(139,92,246,.1);color:var(--accent)}
+
+.spinner{display:none;width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:20px auto}
+.spinner.active{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<h1>🎬 AI 视频生成器</h1>
+<div class="sub">文字描述 → AI扩写脚本 → 生成视频</div>
+
+<div class="tabs">
+<button class="tab active" onclick="switchTab('create')">✨ 生成视频</button>
+<button class="tab" onclick="switchTab('history')">📂 历史记录</button>
+</div>
+
+<!-- CREATE TAB -->
+<div id="tab-create">
+<div class="section">
+<div class="section-title">🔑 API 设置</div>
+<div class="fg"><label>DeepSeek API Key（用于扩写脚本）</label><input type="password" id="dsKey" placeholder="sk-..."></div>
+<div class="fg"><label>可灵 Kling API Key（用于生成视频）</label><input type="password" id="klKey" placeholder="ak-..."><small>在 <a href="https://kling.kuaishou.com" target="_blank" style="color:var(--accent)">kling.kuaishou.com</a> 注册，新用户送免费积分</small></div>
+</div>
+
+<div class="section">
+<div class="section-title">📝 视频描述</div>
+<div class="fg"><label>用简单的话描述你想生成的画面</label><textarea id="userPrompt" rows="3" placeholder="例如：一只橘猫坐在屋顶上，背后是橙色的夕阳，风吹过它的毛发，远处是城市的剪影..."></textarea></div>
+<div style="display:flex;gap:8px;align-items:flex-end">
+<div class="fg" style="flex:1;margin-bottom:0"><label>视频时长</label><select id="duration"><option value="5">5秒</option><option value="10" selected>10秒</option></select></div>
+<div class="fg" style="flex:1;margin-bottom:0"><label>画面比例</label><select id="aspectRatio"><option value="16:9" selected>16:9 横屏</option><option value="9:16">9:16 竖屏</option><option value="1:1">1:1 方形</option></select></div>
+</div>
+<button class="btn btn-primary" id="btnEnhance" onclick="enhancePrompt()" style="margin-top:10px">🤖 DeepSeek 扩写脚本</button>
+<div class="prompt-preview" id="promptPreview"></div>
+</div>
+
+<button class="btn btn-gold" id="btnGenerate" onclick="generateVideo()" disabled>🎬 生成视频</button>
+<div class="spinner" id="spinner"></div>
+<div class="status" id="status"></div>
+
+<div class="result-box" id="resultBox">
+<div class="placeholder"><div class="icon">🎥</div><div>视频生成后将显示在这里</div></div>
+</div>
+</div>
+
+<!-- HISTORY TAB -->
+<div id="tab-history" style="display:none">
+<div class="history" id="historyList"><div style="text-align:center;color:var(--text3);padding:40px;font-size:14px">还没有生成过视频</div></div>
+</div>
+
+</div>
+
+<script>
+// ===== STATE =====
+let enhancedPrompt='';
+let currentVideoUrl='';
+
+// ===== INIT =====
+document.getElementById('dsKey').value=localStorage.getItem('aivideo_dskey')||'';
+document.getElementById('klKey').value=localStorage.getItem('aivideo_klkey')||'';
+renderHistory();
+
+// ===== TABS =====
+function switchTab(tab){
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+event.target.classList.add('active');
+document.getElementById('tab-create').style.display=tab==='create'?'block':'none';
+document.getElementById('tab-history').style.display=tab==='history'?'block':'none';
+}
+
+// ===== ENHANCE PROMPT =====
+async function enhancePrompt(){
+const dsKey=document.getElementById('dsKey').value.trim();
+if(!dsKey){alert('请填入 DeepSeek API Key');return}
+const userPrompt=document.getElementById('userPrompt').value.trim();
+if(!userPrompt){alert('请先输入视频描述');return}
+
+localStorage.setItem('aivideo_dskey',dsKey);
+const btn=document.getElementById('btnEnhance');btn.disabled=true;btn.textContent='⏳ 扩写中...';
+setStatus('正在用 DeepSeek 优化脚本...');
+
+try{
+const resp=await fetch('https://api.deepseek.com/v1/chat/completions',{
+method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+dsKey},
+body:JSON.stringify({model:'deepseek-chat',messages:[
+{role:'system',content:'你是一个专业的AI视频脚本撰写师。根据用户的简短描述，写出一个详细的视频生成提示词。必须包含：画面构图、光线氛围、动作细节、色彩基调、镜头风格。用中文写，控制在200字以内，要具体、有画面感。直接输出提示词，不要加任何前缀说明。'},
+{role:'user',content:userPrompt}
+],temperature:0.8,max_tokens:500})
+});
+if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||'API错误')}
+const data=await resp.json();
+enhancedPrompt=data.choices[0].message.content.trim();
+
+const preview=document.getElementById('promptPreview');
+preview.textContent='✨ 优化后的脚本：\n\n'+enhancedPrompt;
+preview.classList.add('show');
+
+document.getElementById('btnGenerate').disabled=false;
+setStatus('✅ 脚本已就绪，点击"生成视频"开始');
+}catch(e){setStatus('❌ 扩写失败：'+e.message,'error')}
+btn.disabled=false;btn.textContent='🤖 DeepSeek 扩写脚本';
+}
+
+// ===== GENERATE VIDEO =====
+async function generateVideo(){
+const klKey=document.getElementById('klKey').value.trim();
+if(!klKey){alert('请填入可灵 Kling API Key');return}
+const prompt=enhancedPrompt||document.getElementById('userPrompt').value.trim();
+if(!prompt){alert('请先输入视频描述');return}
+
+localStorage.setItem('aivideo_klkey',klKey);
+const btn=document.getElementById('btnGenerate');btn.disabled=true;btn.textContent='⏳ 生成中...';
+document.getElementById('spinner').classList.add('active');
+setStatus('🎬 正在生成视频，大约需要2-5分钟...');
+
+try{
+const duration=document.getElementById('duration').value;
+const aspectRatio=document.getElementById('aspectRatio').value;
+
+// Kling API: create task
+const createResp=await fetch('https://api.kling.kuaishou.com/v1/videos/text2video',{
+method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+klKey},
+body:JSON.stringify({
+model_name:'kling-v1',
+prompt:prompt,
+duration:parseInt(duration),
+aspect_ratio:aspectRatio,
+mode:'std'
+})
+});
+if(!createResp.ok){const e=await createResp.json().catch(()=>({}));throw new Error(e.message||'创建任务失败')}
+const createData=await createResp.json();
+const taskId=createData.data.task_id;
+
+// Poll for result
+let videoUrl=null;
+for(let i=0;i<60;i++){
+await sleep(5000);
+const pollResp=await fetch('https://api.kling.kuaishou.com/v1/videos/text2video/'+taskId,{
+headers:{'Authorization':'Bearer '+klKey}
+});
+const pollData=await pollResp.json();
+const status=pollData.data.task_status;
+
+if(status==='succeed'){
+videoUrl=pollData.data.task_result.videos[0].url;
+break;
+}else if(status==='failed'){
+throw new Error(pollData.data.task_status_msg||'生成失败');
+}
+setStatus('🎬 生成中... ('+(i+1)*5+'秒)');
+}
+
+if(!videoUrl)throw new Error('超时，视频还在排队，稍后查看历史');
+
+currentVideoUrl=videoUrl;
+showVideo(videoUrl);
+setStatus('✅ 视频生成成功！','success');
+saveToHistory(prompt,videoUrl);
+
+}catch(e){setStatus('❌ 生成失败：'+e.message,'error')}
+btn.disabled=false;btn.textContent='🎬 生成视频';
+document.getElementById('spinner').classList.remove('active');
+}
+
+function showVideo(url){
+document.getElementById('resultBox').innerHTML='<video controls autoplay loop src="'+url+'"></video>';
+}
+
+function setStatus(msg,type){
+const el=document.getElementById('status');el.textContent=msg;
+el.className='status'+(type?' '+type:'');
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// ===== HISTORY =====
+function saveToHistory(prompt,url){
+const history=JSON.parse(localStorage.getItem('aivideo_history')||'[]');
+history.unshift({prompt:prompt.slice(0,100),url,time:Date.now()});
+if(history.length>20)history.length=20;
+localStorage.setItem('aivideo_history',JSON.stringify(history));
+renderHistory();
+}
+
+function renderHistory(){
+const history=JSON.parse(localStorage.getItem('aivideo_history')||'[]');
+const el=document.getElementById('historyList');
+if(!history.length){el.innerHTML='<div style="text-align:center;color:var(--text3);padding:40px;font-size:14px">还没有生成过视频</div>';return}
+el.innerHTML=history.map((h,i)=>'<div class="history-item" onclick="loadHistory('+i+')"><video class="thumb" src="'+h.url+'" muted></video><div class="info"><div class="title">'+escapeHtml(h.prompt)+'</div><div class="meta">'+new Date(h.time).toLocaleString('zh-CN')+'</div></div></div>').join('');
+}
+
+function loadHistory(i){
+const history=JSON.parse(localStorage.getItem('aivideo_history')||'[]');
+if(history[i]){showVideo(history[i].url);switchTab('create');currentVideoUrl=history[i].url}
+}
+
+function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+</script>
+</body>
+</html>
