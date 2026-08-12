@@ -75,7 +75,7 @@ let enhancedPrompt='',currentVideoUrl='';
 // Init
 document.getElementById('dsKey').value=localStorage.getItem('av_ds')||'';
 document.getElementById('repToken').value=localStorage.getItem('av_rep')||'';
-document.getElementById('corsProxy').value=localStorage.getItem('av_proxy')||'';
+document.getElementById('corsProxy').value=localStorage.getItem('av_proxy')||'http://localhost:8765/';
 
 function apiFetch(url,options){
 const proxy=document.getElementById('corsProxy').value.trim();
