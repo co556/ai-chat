@@ -45,8 +45,11 @@ h1{font-size:24px;font-weight:800;text-align:center;margin-bottom:4px;background
 
 <div class="section"><div class="section-title">🔑 API 设置</div>
 <div class="fg"><label>DeepSeek API Key</label><input type="password" id="dsKey" placeholder="sk-..."></div>
-<div class="fg"><label>可灵 Access Key</label><input type="text" id="klAk" placeholder="Access Key"><small>在可灵开放平台 → API管理 获取</small></div>
-<div class="fg"><label>可灵 Secret Key</label><input type="password" id="klSk" placeholder="Secret Key"><small>与 Access Key 配对使用</small></div>
+<div class="fg"><label>可灵 API Key</label><input type="password" id="klKey" placeholder="API Key"><small>在可灵开发者中心获取。如果有 AK+SK 也支持，填到下面</small></div>
+<div style="display:flex;gap:8px">
+<div class="fg" style="flex:1"><label>Access Key（可选）</label><input type="text" id="klAk" placeholder="如有AK/SK可填"></div>
+<div class="fg" style="flex:1"><label>Secret Key（可选）</label><input type="password" id="klSk" placeholder="如有AK/SK可填"></div>
+</div>
 <div class="fg"><label>CORS 代理</label><input type="text" id="corsProxy" value="http://localhost:8765/"><small>本地用 http://localhost:8765/，线上用 https://corsproxy.io/?</small></div>
 </div>
 
@@ -75,6 +78,7 @@ let enhancedPrompt='',currentVideoUrl='';
 
 // Init
 document.getElementById('dsKey').value=localStorage.getItem('av_ds')||'';
+document.getElementById('klKey').value=localStorage.getItem('av_klkey')||'';
 document.getElementById('klAk').value=localStorage.getItem('av_ak')||'';
 document.getElementById('klSk').value=localStorage.getItem('av_sk')||'';
 document.getElementById('corsProxy').value=localStorage.getItem('av_proxy')||'http://localhost:8765/';
@@ -113,12 +117,14 @@ btn.disabled=false;btn.textContent='🤖 DeepSeek 扩写脚本';
 }
 
 async function generateVideo(){
+const apiKey=document.getElementById('klKey').value.trim();
 const ak=document.getElementById('klAk').value.trim();
 const sk=document.getElementById('klSk').value.trim();
-if(!ak||!sk){alert('请填入可灵 Access Key 和 Secret Key');return}
+if(!apiKey&&(!ak||!sk)){alert('请至少填入可灵 API Key');return}
 const prompt=enhancedPrompt||document.getElementById('userPrompt').value.trim();
 if(!prompt){alert('请先输入视频描述');return}
-localStorage.setItem('av_ak',ak);localStorage.setItem('av_sk',sk);
+
+localStorage.setItem('av_klkey',apiKey);localStorage.setItem('av_ak',ak);localStorage.setItem('av_sk',sk);
 localStorage.setItem('av_proxy',document.getElementById('corsProxy').value.trim());
 
 const btn=document.getElementById('btnGenerate');btn.disabled=true;btn.textContent='⏳ 生成中...';
@@ -127,70 +133,52 @@ document.getElementById('debugBox').classList.remove('show');
 setStatus('🎬 生成视频中...');
 
 try{
-// Step 1: Create JWT token from AK+SK (simple HMAC-SHA256)
-const header={alg:'HS256',typ:'JWT'};
-const now=Math.floor(Date.now()/1000);
-const payload={iss:ak,exp:now+1800,nbf:now-5};
-const jwt=await createJWT(header,payload,sk);
+let authToken=apiKey; // Use API key directly as Bearer token
 
-// Step 2: Exchange JWT for API token
+// If AK+SK provided, exchange for token
+if(ak&&sk){
 setStatus('🔑 获取API令牌...');
 const tokenResp=await apiFetch('https://api.kling.kuaishou.com/v1/token',{
 method:'POST',headers:{'Content-Type':'application/json'},
 body:JSON.stringify({access_key:ak,secret_key:sk})
 });
-debugLog('Token response',tokenResp.status,await tokenResp.clone().text());
-if(!tokenResp.ok){
-const te=await tokenResp.json().catch(()=>({}));
-throw new Error('Token获取失败: '+(te.message||te.error_msg||'HTTP '+tokenResp.status));
+debugLog('Token',tokenResp.status,await tokenResp.clone().text());
+if(tokenResp.ok){
+const td=await tokenResp.json();
+if(td.data?.api_token)authToken=td.data.api_token;
 }
-const tokenData=await tokenResp.json();
-const apiToken=tokenData.data?.api_token||tokenData.api_token;
-if(!apiToken)throw new Error('Token为空，响应：'+JSON.stringify(tokenData));
+}
 
-// Step 3: Create video task
+// Create video task
 setStatus('🎬 创建视频任务...');
-const createResp=await apiFetch('https://api.kling.kuaishou.com/v1/videos/text2video',{
+const resp=await apiFetch('https://api.kling.kuaishou.com/v1/videos/text2video',{
 method:'POST',
-headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiToken},
-body:JSON.stringify({model_name:'kling-v1',prompt:prompt,duration:parseInt(document.getElementById('duration').value),aspect_ratio:document.getElementById('aspectRatio').value,mode:'std'})
+headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
+body:JSON.stringify({model_name:'kling-v1',prompt,duration:parseInt(document.getElementById('duration').value),aspect_ratio:document.getElementById('aspectRatio').value,mode:'std'})
 });
-debugLog('Create response',createResp.status,await createResp.clone().text());
-if(!createResp.ok){
-const ce=await createResp.json().catch(()=>({}));
-throw new Error('创建失败: '+(ce.message||ce.error_msg||'HTTP '+createResp.status));
-}
-const createData=await createResp.json();
-const taskId=createData.data?.task_id;
-if(!taskId)throw new Error('未获取到task_id: '+JSON.stringify(createData));
+const respText=await resp.clone().text();
+debugLog('Create',resp.status,respText);
+if(!resp.ok){let e;try{e=JSON.parse(respText)}catch{throw new Error('HTTP '+resp.status+' '+respText.slice(0,200))};throw new Error(e.message||e.error_msg||'HTTP '+resp.status)}
+const data=JSON.parse(respText);
+const taskId=data.data?.task_id;
+if(!taskId){setStatus('⚠️ 没有task_id，尝试直接获取结果...');throw new Error('响应格式异常: '+respText.slice(0,300))}
 
-// Step 4: Poll
-for(let i=0;i<60;i++){
+// Poll
+for(let i=0;i<72;i++){
 await sleep(5000);
-const pollResp=await apiFetch('https://api.kling.kuaishou.com/v1/videos/text2video/'+taskId,{
-headers:{'Authorization':'Bearer '+apiToken}
-});
-const pollData=await pollResp.json();
-const st=pollData.data?.task_status;
-setStatus('🎬 生成中...('+((i+1)*5)+'s) '+st);
+const pr=await apiFetch('https://api.kling.kuaishou.com/v1/videos/text2video/'+taskId,{headers:{'Authorization':'Bearer '+authToken}});
+const pd=await pr.json();
+const st=pd.data?.task_status;
+setStatus('🎬 '+st+' ('+((i+1)*5)+'秒)');
 if(st==='succeeded'){
-currentVideoUrl=pollData.data.task_result.videos[0].url;
-showVideo(currentVideoUrl);
-setStatus('✅ 生成成功！','success');
-btn.disabled=false;btn.textContent='🎬 生成视频';
-document.getElementById('spinner').classList.remove('active');
-return;
-}else if(st==='failed'){
-throw new Error(pollData.data.task_status_msg||'生成失败');
+currentVideoUrl=pd.data.task_result.videos[0].url;
+showVideo(currentVideoUrl);setStatus('✅ 生成成功！','success');
+btn.disabled=false;btn.textContent='🎬 生成视频';document.getElementById('spinner').classList.remove('active');return;
+}else if(st==='failed'){throw new Error(pd.data.task_status_msg||'生成失败')}
 }
-}
-throw new Error('超时，请稍后重试');
-}catch(e){
-setStatus('❌ '+e.message,'error');
-debugLog('ERROR',0,e.message);
-btn.disabled=false;btn.textContent='🎬 生成视频';
-document.getElementById('spinner').classList.remove('active');
-}
+throw new Error('超时，6分钟还没好');
+}catch(e){setStatus('❌ '+e.message,'error');debugLog('ERROR',0,e.message)}
+btn.disabled=false;btn.textContent='🎬 生成视频';document.getElementById('spinner').classList.remove('active');
 }
 
 async function createJWT(header,payload,secret){
